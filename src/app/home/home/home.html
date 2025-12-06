@@ -1,0 +1,170 @@
+<div class="page">
+  <div class="layout">
+    
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar__header">
+        <div class="user-profile">
+          <div class="user-profile__avatar" [style.background]="currentUser.avatarColor"></div>
+          <div class="user-profile__info">
+            <div class="user-profile__name">{{ currentUser.name }}</div>
+            <div class="user-profile__role">{{ currentUser.role }}</div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar__nav">
+        <!-- New Task Button -->
+        <div class="nav-group">
+          <button class="cta-button" (click)="openAddTask()">
+            <span class="plus-icon">+</span> New Task
+          </button>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-group">
+          <div class="nav-group__title">Menu</div>
+          <button class="nav-item" [class.nav-item--active]="activeFilter === 'all'" (click)="setFilter('all')">
+            <span class="nav-item__icon">📅</span> Calendar
+          </button>
+          <button class="nav-item" (click)="openToday()">
+            <span class="nav-item__icon">📊</span> Statistics & Todo
+          </button>
+        </div>
+
+        <!-- Priority Filters -->
+        <div class="nav-group">
+          <div class="nav-group__title">Priority Filter</div>
+          <button class="nav-item" [class.nav-item--active]="activeFilter === 'high'" (click)="setFilter('high')">
+            <span class="project-dot" style="background: #ef4444"></span> High Priority
+          </button>
+          <button class="nav-item" [class.nav-item--active]="activeFilter === 'medium'" (click)="setFilter('medium')">
+            <span class="project-dot" style="background: #f97316"></span> Medium Priority
+          </button>
+          <button class="nav-item" [class.nav-item--active]="activeFilter === 'low'" (click)="setFilter('low')">
+            <span class="project-dot" style="background: #3b82f6"></span> Low Priority
+          </button>
+        </div>
+      </nav>
+
+      <div class="sidebar__footer">
+        <button class="nav-item" (click)="openSettings()"><span class="nav-item__icon">⚙️</span> Settings</button>
+        <button class="nav-item" (click)="onLogout()"><span class="nav-item__icon">🚪</span> Log out</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CALENDAR -->
+    <main class="main">
+      <section #calendarContainer class="calendar-card">
+        
+        <header class="calendar-card__header">
+          <div class="calendar-card__title">
+            {{ viewDate | date:'MMMM' }} 
+            <span class="calendar-card__year">{{ viewDate | date:'yyyy' }}</span>
+          </div>
+          <div class="controls-group">
+            <button class="icon-btn" (click)="changeMonth(-1)">&lt;</button>
+            <button class="icon-btn" (click)="goToToday()">Today</button>
+            <button class="icon-btn" (click)="changeMonth(1)">&gt;</button>
+          </div>
+        </header>
+
+        <div class="calendar-card__grid">
+          <div class="calendar-card__weekday">Mon</div>
+          <div class="calendar-card__weekday">Tue</div>
+          <div class="calendar-card__weekday">Wed</div>
+          <div class="calendar-card__weekday">Thu</div>
+          <div class="calendar-card__weekday">Fri</div>
+          <div class="calendar-card__weekday">Sat</div>
+          <div class="calendar-card__weekday">Sun</div>
+
+          <div 
+            class="calendar-card__cell"
+            *ngFor="let day of calendarDays"
+            [class.calendar-card__cell--muted]="!day.isCurrentMonth"
+            [class.calendar-card__cell--today]="day.isToday"
+            (click)="openDayView(day)"
+          >
+            <span class="date-number">{{ day.dayNumber }}</span>
+
+            <div class="tasks-stack">
+              <div 
+                class="event" 
+                *ngFor="let task of getTasksForDay(day)"
+                [ngClass]="getTaskColor(task.priority)"
+                [class.event--done]="task.isDone"
+                (click)="$event.stopPropagation(); openDayView(day)"
+              >
+                <span>{{ task.title }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MODALS -->
+      <app-add-task
+        [open]="isAddTaskOpen"
+        [panelStyle]="addTaskStyle"
+        [taskToEdit]="taskToEdit"
+        [preselectedDate]="initialDate"
+        (closed)="closeAddTask()"
+        (saved)="onTaskSaved($event)"
+      ></app-add-task>
+      
+      <app-today-tasks 
+        [open]="isTodayOpen" 
+        [tasks]="tasks" 
+        (closed)="closeToday()" 
+        (addNew)="openAddTask()"
+      ></app-today-tasks>
+
+      <app-settings 
+        [open]="isSettingsOpen" 
+        (closed)="closeSettings()"
+      ></app-settings>
+
+      <!-- DAY VIEW MODAL -->
+      <div class="backdrop" *ngIf="isDayViewOpen" (click)="closeDayView()">
+        <div class="day-view-panel" (click)="$event.stopPropagation()">
+          <header class="day-view-header">
+            <div class="day-view-date">{{ selectedDayDate | date:'fullDate' }}</div>
+            <button class="close-btn" (click)="closeDayView()">&times;</button>
+          </header>
+
+          <div class="day-view-body">
+            <div *ngIf="selectedDayTasks.length === 0" class="empty-day-state">
+              No tasks for this day.
+            </div>
+
+            <div class="day-task-card" *ngFor="let task of selectedDayTasks" [class.day-task-card--done]="task.isDone">
+              <div class="day-task-top">
+                <span class="day-task-badge" 
+                  [class.badge-red]="task.priority === 'high'"
+                  [class.badge-orange]="task.priority === 'medium'"
+                  [class.badge-blue]="task.priority === 'low'">
+                  {{ task.priority }}
+                </span>
+                
+                <div class="actions" style="display: flex; gap: 8px;">
+                  <span class="day-task-time">{{ task.date | date:'HH:mm' }}</span>
+                  <button class="action-btn" (click)="openEditTask(task)" title="Edit">✎</button>
+                  <button class="action-btn btn-delete" (click)="onDeleteTask(task)" title="Delete">🗑</button>
+                </div>
+              </div>
+              
+              <div class="day-task-title">{{ task.title }}</div>
+              <div class="day-task-desc" *ngIf="task.description">{{ task.description }}</div>
+              <div class="day-task-footer" *ngIf="task.isDone"><span class="completed-label">✓ Completed</span></div>
+            </div>
+          </div>
+          
+          <footer class="day-view-footer">
+            <button class="btn-add-small" (click)="closeDayView(); openAddTask(selectedDayDate!)">+ Add Task</button>
+          </footer>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>

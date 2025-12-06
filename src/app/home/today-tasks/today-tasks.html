@@ -1,0 +1,56 @@
+<div class="backdrop" *ngIf="open" (click)="close()">
+  <div class="panel" (click)="$event.stopPropagation()">
+
+    <header class="panel__header">
+      <div>
+        <h2 class="panel__title">My Tasks</h2>
+        <span class="panel__subtitle">{{ stats.done }} / {{ stats.total }} completed</span>
+      </div>
+      <button class="close-btn" (click)="close()">&times;</button>
+    </header>
+
+
+    <div class="panel__body">
+      
+
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="stats.percent"></div>
+      </div>
+
+
+      <div class="tasks-list">
+        
+        <div *ngIf="sortedTasks.length === 0" class="empty-state">
+          No tasks for now.
+        </div>
+
+        <div 
+          class="task-row" 
+          *ngFor="let task of sortedTasks"
+          [class.task-row--done]="task.isDone"
+          (click)="toggleTask(task)"
+        >
+          <div class="checkbox">
+            <span *ngIf="task.isDone">✔</span>
+          </div>
+          
+          <div class="task-info">
+            <div class="task-title">{{ task.title }}</div>
+            <div class="task-meta">
+               <span class="priority-dot" [style.background]="getPriorityColor(task.priority)"></span>
+               {{ task.date | date:'dd MMM, HH:mm' }}
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <footer class="panel__footer">
+      <button class="btn-add-new" (click)="onAddNew()">
+        <span class="plus">+</span> Add New Task
+      </button>
+    </footer>
+
+  </div>
+</div>

@@ -1,0 +1,22 @@
+    <div class="recovery-page">
+      <div class="recovery-box">
+        <h2>Восстановление</h2>
+        <p class="hint-text">Введите код восстановления, который был отправлен вам на почту</p>
+
+        <div class="form-group">
+          <input 
+            [(ngModel)]="code" 
+            name="code"
+            class="recovery-input" 
+            placeholder="Введите код восстановления" 
+            required
+          />
+        </div>
+
+        <div class="buttons">
+          <button type="button" class="cancel-btn" (click)="onCancel()">Отмена</button>
+          <button type="button" class="send-btn" (click)="onSubmit()">Отправить код</button>
+        </div>
+      </div>
+    </div>
+  `,
