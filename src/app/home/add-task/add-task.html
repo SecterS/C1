@@ -1,0 +1,98 @@
+<aside 
+  class="add-task-panel" 
+  *ngIf="open" 
+  [ngStyle]="panelStyle"
+  role="dialog"
+  aria-modal="true"
+>
+  <header class="add-task-panel__header">
+    <h2 class="add-task-panel__title">
+      {{ taskToEdit ? 'Edit Task' : 'New Task' }}
+    </h2>
+    <button class="close-btn" (click)="close()">&times;</button>
+  </header>
+
+  <div class="add-task-panel__body">
+    
+    <div class="form-group">
+      <label class="label">Task Name</label>
+      <input 
+        #titleInput 
+        type="text" 
+        class="input" 
+        placeholder="E.g. Weekly Sync..."
+        [value]="taskToEdit?.title || ''"
+      >
+    </div>
+
+    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <div class="form-group">
+        <label class="label">Due Date</label>
+        <input 
+          #dateInput 
+          type="datetime-local" 
+          class="input"
+          [value]="getInputValue()"
+        >
+      </div>
+      
+      <div class="form-group">
+        <label class="label">Reminder</label>
+        <select #reminderInput class="input" style="cursor: pointer;" [value]="taskToEdit?.reminder || 'none'">
+          <option value="none">No reminder</option>
+          <option value="15m">15 min before</option>
+          <option value="1h">1 hour before</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <div class="form-group">
+        <label class="label">Priority</label>
+        <select #priorityInput class="input" style="cursor: pointer;" [value]="taskToEdit?.priority || 'medium'">
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High 🔥</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="label">Category</label>
+        <select #categoryInput class="input" style="cursor: pointer;" [value]="taskToEdit?.category || 'work'">
+          <option value="work">Work 💼</option>
+          <option value="study">Study 🎓</option>
+          <option value="personal">Personal 🏠</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="label">Description</label>
+      <textarea 
+        #descInput 
+        class="input textarea" 
+        rows="3" 
+        placeholder="Add details..."
+        [value]="taskToEdit?.description || ''"
+      ></textarea>
+    </div>
+
+  </div>
+
+  <footer class="add-task-panel__footer">
+    <button class="btn btn--secondary" (click)="close()">Cancel</button>
+    <button 
+      class="btn btn--primary" 
+      (click)="save(
+        titleInput.value, 
+        dateInput.value, 
+        descInput.value,
+        priorityInput.value,
+        categoryInput.value,
+        reminderInput.value
+      )"
+    >
+      {{ taskToEdit ? 'Save Changes' : 'Create Task' }}
+    </button>
+  </footer>
+</aside>

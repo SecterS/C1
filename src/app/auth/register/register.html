@@ -1,0 +1,38 @@
+<div class="register-box">
+  <h2>Регистрация</h2>
+
+  <form (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <label for="firstName">Имя <span>*</span></label>
+      <input type="text" id="firstName" name="firstName" placeholder="Введите имя" required />
+    </div>
+
+    <div class="form-group">
+      <label for="lastName">Фамилия <span>*</span></label>
+      <input type="text" id="lastName" name="lastName" placeholder="Введите фамилию" required />
+    </div>
+
+    <div class="form-group">
+      <label for="email">E-mail <span>*</span></label>
+      <input type="email" id="email" name="email" placeholder="Введите e-mail" required />
+    </div>
+
+    <div class="form-group">
+      <label for="password">Пароль <span>*</span></label>
+      <input type="password" id="password" name="password" placeholder="Введите пароль" required />
+    </div>
+
+    <div class="form-group">
+      <label for="confirmPassword">Повторите пароль</label>
+      <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Повторите пароль" required />
+    </div>
+
+    <div>
+      * - обязательные поля для ввода 
+    </div>
+    <div class="buttons">
+      <button type="submit" class="register-btn">Зарегистрироваться</button>
+      <button type="button" class="cancel-btn" (click)="onCancel()">Отмена</button>
+    </div>
+  </form>
+</div>
