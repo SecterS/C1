@@ -1,83 +1,94 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Task } from '../../services/task.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-add-task',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './add-task.html',
-  styleUrls: ['./add-task.scss']
+  styleUrl: './add-task.scss'
 })
-export class AddTask {
+export class AddTask implements OnChanges {
   @Input() open = false;
-  @Input() panelStyle: { [k: string]: any } = {};
-
-  @Input() taskToEdit: Task | null = null;
-  
-  @Input() preselectedDate: string = ''; 
+  @Input() panelStyle: any = {};
+  @Input() taskToEdit: any = null;
+  @Input() preselectedDate: string = '';
   
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<any>();
+
+  title = '';
+  description = '';
+  date = '';
+  priority = 'low';
+  category = 'personal';
+  reminder = 'none'; //
+  
+  errorText = ''; 
+
+ 
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['open'] && this.open) {
+      this.resetForm();
+    }
+  }
+
+   resetForm() {
+    this.errorText = '';
+
+    if (this.taskToEdit) {
+     
+      this.title = this.taskToEdit.title;
+      this.description = this.taskToEdit.description;
+      this.date = this.taskToEdit.date;
+      this.priority = this.taskToEdit.priority;
+      this.category = this.taskToEdit.category || 'personal';
+      
+
+      this.reminder = this.taskToEdit.reminder || 'none'; 
+
+    } else {
+
+      this.title = '';
+      this.description = '';
+      this.date = this.preselectedDate || new Date().toISOString().split('T')[0];
+      this.priority = 'low';
+      this.category = 'personal';
+      
+
+      this.reminder = 'none'; 
+    }
+  }
 
   close() {
     this.closed.emit();
   }
 
-  save(title: string, date: string, desc: string, priority: string, category: string, reminder: string) {
-    if (!title.trim()) {
-      alert('Please enter a task name');
-      return;
-    }
-
-    let finalDate = date;
-    
-
-    if (!finalDate) {
-      if (this.preselectedDate) {
-        const d = new Date(this.preselectedDate);
-        const now = new Date();
-        d.setHours(now.getHours(), now.getMinutes());
-        finalDate = d.toISOString();
-      } else {
-        finalDate = new Date().toISOString();
-      }
+  save() {
+   
+    if (!this.title.trim()) {
+      this.errorText = 'Нужно ввести название задачи!'; 
+      return; 
     }
 
     const taskData = {
-      title,
-      date: finalDate,
-      description: desc,
-      priority,
-      category,
-      reminder,
       id: this.taskToEdit ? this.taskToEdit.id : null,
-      isDone: this.taskToEdit ? this.taskToEdit.isDone : false
+      title: this.title,
+      description: this.description,
+      date: this.date,
+      priority: this.priority,
+      category: this.category,
+      reminder: this.reminder,
+       isDone: this.taskToEdit ? this.taskToEdit.isDone : false
     };
 
     this.saved.emit(taskData);
   }
 
-  getInputValue(): string {
-    if (this.taskToEdit) {
-      return this.formatDate(new Date(this.taskToEdit.date));
-    }
 
-    if (this.preselectedDate) {
-      const d = new Date(this.preselectedDate);
-      const now = new Date();
-      d.setHours(now.getHours(), now.getMinutes());
-      return this.formatDate(d);
-    }
-    return '';
-  }
-
-  private formatDate(date: Date): string {
-    const pad = (n: number) => n < 10 ? '0' + n : n;
-    return date.getFullYear() + '-' + 
-           pad(date.getMonth() + 1) + '-' + 
-           pad(date.getDate()) + 'T' + 
-           pad(date.getHours()) + ':' + 
-           pad(date.getMinutes());
+  clearError() {
+    this.errorText = '';
   }
 }
