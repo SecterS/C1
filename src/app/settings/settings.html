@@ -1,0 +1,57 @@
+<div class="backdrop" *ngIf="open" (click)="close()">
+  <div class="panel" (click)="$event.stopPropagation()">
+    
+    <header class="panel__header">
+      <h2 class="panel__title">Settings</h2>
+      <button class="close-btn" (click)="close()">&times;</button>
+    </header>
+
+    <div class="panel__body">
+      
+      <!--Аккаунт -->
+      <div class="section">
+        <div class="section-title">Account</div>
+        <div class="input-group">
+          <label>Email</label>
+          <input type="text" [value]="email" readonly class="input-readonly">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!--Настройки -->
+      <div class="section">
+        <div class="section-title">Preferences</div>
+        
+
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Enable Notifications</span>
+            <span class="toggle-desc">Get push notifications for deadlines</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" [(ngModel)]="notifications">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Show Completed Tasks</span>
+            <span class="toggle-desc">Keep finished tasks in history</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" [(ngModel)]="showCompleted">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+      </div>
+
+    </div>
+    
+
+
+  </div>
+</div>
