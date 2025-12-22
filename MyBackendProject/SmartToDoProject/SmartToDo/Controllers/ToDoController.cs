@@ -8,25 +8,25 @@ namespace SmartToDo.Controllers;
 [Route("api/[controller]")]
 public class ToDoController : ControllerBase
 {
-    private readonly InMemoryToDoRepository _repo;
+    private readonly PostgresToDoRepository _repo;
 
-    public ToDoController(InMemoryToDoRepository repo)
+    public ToDoController(PostgresToDoRepository repo)
     {
         _repo = repo;
     }
 
-    [HttpGet] // GET: api/todo
-    public IActionResult Get([FromQuery] Category? category, [FromQuery] string? sortBy)
+    [HttpGet]
+    public IActionResult Get([FromQuery] Category? category, [FromQuery] string? sortBy) 
         => Ok(_repo.GetAll(category, sortBy));
 
-    [HttpPost] // POST: api/todo
+    [HttpPost]
     public IActionResult Create([FromBody] ToDoItem item)
     {
         _repo.Add(item);
         return Ok(item);
     }
 
-    [HttpPut("{id}")] // PUT: api/todo/1
+    [HttpPut("{id}")]
     public IActionResult Update(int id, [FromBody] ToDoItem item)
     {
         item.Id = id;
@@ -34,6 +34,13 @@ public class ToDoController : ControllerBase
         return Ok();
     }
 
-    [HttpGet("stats")] // GET: api/todo/stats
+    [HttpDelete("{id}")]
+    public IActionResult Delete(int id)
+    {
+        _repo.Delete(id);
+        return NoContent();
+    }
+
+    [HttpGet("stats")]
     public IActionResult Stats() => Ok(_repo.GetStats());
 }

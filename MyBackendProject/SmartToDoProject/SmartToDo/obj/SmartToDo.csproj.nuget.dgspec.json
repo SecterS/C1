@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\C1-feature-final-release\\MyBackendProject\\SmartToDoProject\\SmartToDo\\SmartToDo.csproj": {}
+    "C:\\MyProjects\\C1\\MyBackendProject\\SmartToDoProject\\SmartToDo\\SmartToDo.csproj": {}
   },
   "projects": {
-    "C:\\C1-feature-final-release\\MyBackendProject\\SmartToDoProject\\SmartToDo\\SmartToDo.csproj": {
+    "C:\\MyProjects\\C1\\MyBackendProject\\SmartToDoProject\\SmartToDo\\SmartToDo.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\C1-feature-final-release\\MyBackendProject\\SmartToDoProject\\SmartToDo\\SmartToDo.csproj",
+        "projectUniqueName": "C:\\MyProjects\\C1\\MyBackendProject\\SmartToDoProject\\SmartToDo\\SmartToDo.csproj",
         "projectName": "SmartToDo",
-        "projectPath": "C:\\C1-feature-final-release\\MyBackendProject\\SmartToDoProject\\SmartToDo\\SmartToDo.csproj",
+        "projectPath": "C:\\MyProjects\\C1\\MyBackendProject\\SmartToDoProject\\SmartToDo\\SmartToDo.csproj",
         "packagesPath": "C:\\Users\\stpet\\.nuget\\packages\\",
-        "outputPath": "C:\\C1-feature-final-release\\MyBackendProject\\SmartToDoProject\\SmartToDo\\obj\\",
+        "outputPath": "C:\\MyProjects\\C1\\MyBackendProject\\SmartToDoProject\\SmartToDo\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -50,6 +50,10 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "Npgsql": {
+              "target": "Package",
+              "version": "[10.0.1, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[6.5.0, )"

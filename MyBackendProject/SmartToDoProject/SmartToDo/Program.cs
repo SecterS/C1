@@ -2,17 +2,16 @@
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Подключаем контроллеры
+
 builder.Services.AddControllers();
 
-// 2. Включаем наш репозиторий (Singleton = одна база на всё время работы)
-builder.Services.AddSingleton<InMemoryToDoRepository>();
 
-// 3. Настройки Swagger
+builder.Services.AddScoped<PostgresToDoRepository>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 4. Разрешаем CORS (чтобы фронтенд мог подключиться)
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -21,7 +20,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Включаем Swagger и интерфейс
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
