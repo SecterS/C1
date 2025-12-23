@@ -1,15 +1,16 @@
+DROP TABLE IF EXISTS "Tasks";
+DROP TABLE IF EXISTS tasks;
 
-
-CREATE TABLE IF NOT EXISTS Tasks (
-    Id SERIAL PRIMARY KEY,
-    Title TEXT NOT NULL,
-    Description TEXT,
-    DueDate TIMESTAMP,
-    Priority INT NOT NULL,  
-    Category INT NOT NULL,  
-    IsCompleted BOOLEAN DEFAULT FALSE,
-    HasReminder BOOLEAN DEFAULT FALSE
+CREATE TABLE tasks (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    duedate TIMESTAMP,
+    priority INT NOT NULL,
+    category INT NOT NULL,
+    iscompleted BOOLEAN DEFAULT FALSE,
+    hasreminder BOOLEAN DEFAULT FALSE,
+    completedat TIMESTAMP 
 );
 
-
-INSERT INTO Tasks (Title, Priority, Category) VALUES ('Проверка работы', 2, 1);
+INSERT INTO tasks (title, priority, category) VALUES ('Demo Task', 3, 1);

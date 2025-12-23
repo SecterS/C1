@@ -10,25 +10,59 @@ public class PostgresToDoRepository
     public List<ToDoItem> GetAll(Category? category, string? sortBy)
     {
         var result = new List<ToDoItem>();
-        try 
+
+        try
         {
             using var conn = new NpgsqlConnection(ConnectionString);
             conn.Open();
 
-            // ИСПРАВЛЕНО: Убрали кавычки вокруг Tasks
             var sql = "SELECT * FROM Tasks";
-            
-            using var cmd = new NpgsqlCommand(sql, conn);
-            using var reader = cmd.ExecuteReader();
+            var whereParts = new List<string>();
 
+            using var cmd = new NpgsqlCommand();
+            cmd.Connection = conn;
+
+            if (category.HasValue)
+            {
+                whereParts.Add("Category = @Category");
+                cmd.Parameters.AddWithValue("Category", (int)category.Value);
+            }
+
+            if (whereParts.Count > 0)
+                sql += " WHERE " + string.Join(" AND ", whereParts);
+
+            if (!string.IsNullOrWhiteSpace(sortBy))
+            {
+                var desc = sortBy.StartsWith("-");
+                var key = desc ? sortBy[1..] : sortBy;
+                key = key.Trim().ToLowerInvariant();
+
+                var orderBy = key switch
+                {
+                    "id" => "Id",
+                    "title" => "Title",
+                    "duedate" => "DueDate",
+                    "priority" => "Priority",
+                    "category" => "Category",
+                    "iscompleted" => "IsCompleted",
+                    _ => null
+                };
+
+                if (orderBy is null)
+                    throw new ArgumentException($"Unsupported sortBy value: {sortBy}");
+
+                sql += $" ORDER BY {orderBy} {(desc ? "DESC" : "ASC")}";
+            }
+
+            cmd.CommandText = sql;
+
+            using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
                 result.Add(new ToDoItem
                 {
-                    // ИСПРАВЛЕНО: Читаем колонки без учета регистра
                     Id = reader.GetInt32(reader.GetOrdinal("id")),
                     Title = reader.GetString(reader.GetOrdinal("title")),
-                    // Обрати внимание: GetOrdinal ищет case-insensitive обычно, но лучше писать как в базе (lowercase) если что
                     Description = reader.IsDBNull(reader.GetOrdinal("description")) ? "" : reader.GetString(reader.GetOrdinal("description")),
                     DueDate = reader.IsDBNull(reader.GetOrdinal("duedate")) ? null : reader.GetDateTime(reader.GetOrdinal("duedate")),
                     Priority = (Priority)reader.GetInt32(reader.GetOrdinal("priority")),
@@ -43,7 +77,8 @@ public class PostgresToDoRepository
             Console.WriteLine("DB ERROR (GetAll): " + ex.Message);
             throw;
         }
-        return result; 
+
+        return result;
     }
 
     public void Add(ToDoItem item)
@@ -53,7 +88,6 @@ public class PostgresToDoRepository
             using var conn = new NpgsqlConnection(ConnectionString);
             conn.Open();
 
-            // ИСПРАВЛЕНО: Убрали кавычки везде
             var sql = @"
                 INSERT INTO Tasks (Title, Description, DueDate, Priority, Category, IsCompleted, HasReminder)
                 VALUES (@Title, @Desc, @Date, @Prio, @Cat, @IsComp, @Rem)
@@ -62,7 +96,7 @@ public class PostgresToDoRepository
             using var cmd = new NpgsqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("Title", item.Title ?? "");
             cmd.Parameters.AddWithValue("Desc", item.Description ?? "");
-            
+
             if (item.DueDate.HasValue)
                 cmd.Parameters.AddWithValue("Date", item.DueDate.Value.ToUniversalTime());
             else
@@ -85,12 +119,11 @@ public class PostgresToDoRepository
 
     public void Delete(int id)
     {
-        try 
+        try
         {
             using var conn = new NpgsqlConnection(ConnectionString);
             conn.Open();
 
-            // ИСПРАВЛЕНО: Просто Tasks и Id без кавычек
             var sql = "DELETE FROM Tasks WHERE Id = @Id";
 
             using var cmd = new NpgsqlCommand(sql, conn);
@@ -101,12 +134,12 @@ public class PostgresToDoRepository
         catch (Exception ex)
         {
             Console.WriteLine("DB ERROR (Delete): " + ex.Message);
-            throw; 
+            throw;
         }
     }
 
-    public void Update(ToDoItem item) 
-    { 
+    public void Update(ToDoItem item)
+    {
         try
         {
             using var conn = new NpgsqlConnection(ConnectionString);
@@ -137,6 +170,6 @@ public class PostgresToDoRepository
             throw;
         }
     }
-    
-    public object GetStats() { return new {}; }
+
+    public object GetStats() { return new { }; }
 }
