@@ -16,7 +16,7 @@ public class HybridToDoRepository : IToDoRepository
     {
         _context = context;
         _connectionString = configuration.GetConnectionString("DefaultConnection") 
-                            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+                            ?? throw new InvalidOperationException("Connection string not found.");
     }
 
     public List<ToDoItem> GetAll(Category? category, string? sortBy)
@@ -74,15 +74,16 @@ public class HybridToDoRepository : IToDoRepository
         using var conn = new NpgsqlConnection(_connectionString);
         conn.Open();
         
-        var sql = @"INSERT INTO tasks (title, description, duedate, priority, category, iscompleted, hasreminder)
-                    VALUES (@t, @d, @dd, @p, @c, @ic, @hr) RETURNING id";
+        var sql = @"INSERT INTO tasks (user_id, title, description, duedate, priority, category, iscompleted, hasreminder)
+                    VALUES (@uid, @t, @d, @dd, @p, @c, @ic, @hr) RETURNING id";
         
         using var cmd = new NpgsqlCommand(sql, conn);
+        
+        cmd.Parameters.AddWithValue("uid", item.UserId);
         cmd.Parameters.AddWithValue("t", item.Title ?? "");
         cmd.Parameters.AddWithValue("d", item.Description ?? "");
         
         if (item.DueDate.HasValue) 
-            
             cmd.Parameters.AddWithValue("dd", item.DueDate.Value);
         else 
             cmd.Parameters.AddWithValue("dd", DBNull.Value);
@@ -109,22 +110,18 @@ public class HybridToDoRepository : IToDoRepository
         cmd.ExecuteNonQuery();
     }
 
-
     public void Update(ToDoItem item)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
 
         var existing = _context.Tasks.Find(item.Id);
-        if (existing == null) 
-        {
-            return;
-        }
+        if (existing == null) return;
 
         existing.Title = item.Title;
         existing.Description = item.Description ?? "";
         existing.Priority = item.Priority;
         existing.Category = item.Category;
-
+        
         if (item.DueDate.HasValue)
             existing.DueDate = item.DueDate.Value;
         else

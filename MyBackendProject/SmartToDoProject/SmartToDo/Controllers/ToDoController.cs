@@ -8,7 +8,6 @@ namespace SmartToDo.Controllers;
 [Route("api/[controller]")]
 public class ToDoController : ControllerBase
 {
-
     private readonly IToDoRepository _repo;
 
     public ToDoController(IToDoRepository repo)
@@ -21,7 +20,6 @@ public class ToDoController : ControllerBase
     {
         try
         {
-
             var tasks = _repo.GetAll(category, sortBy);
             return Ok(tasks);
         }
@@ -38,6 +36,7 @@ public class ToDoController : ControllerBase
 
         try
         {
+            item.UserId = 1; 
             _repo.Add(item);
             return Ok(item);
         }
