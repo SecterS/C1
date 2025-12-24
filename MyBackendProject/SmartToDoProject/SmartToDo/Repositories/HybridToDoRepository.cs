@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Npgsql;
 using SmartToDo.Data;
 using SmartToDo.Models;
@@ -6,34 +7,36 @@ using System.Data;
 
 namespace SmartToDo.Repositories;
 
-public class HybridToDoRepository
+public class HybridToDoRepository : IToDoRepository
 {
     private readonly AppDbContext _context;
-    private const string ConnectionString = "Host=localhost;Port=5432;Database=postgres;Username=postgres;";
+    private readonly string _connectionString;
 
-    public HybridToDoRepository(AppDbContext context)
+    public HybridToDoRepository(AppDbContext context, IConfiguration configuration)
     {
         _context = context;
+        _connectionString = configuration.GetConnectionString("DefaultConnection") 
+                            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
     }
 
     public List<ToDoItem> GetAll(Category? category, string? sortBy)
     {
         var result = new List<ToDoItem>();
         
-        using var conn = new NpgsqlConnection(ConnectionString);
+        using var conn = new NpgsqlConnection(_connectionString);
         conn.Open();
 
-        var sql = "SELECT * FROM tasks";
-        
+        var sql = "SELECT * FROM tasks WHERE 1=1";
+
         if (category.HasValue)
         {
-            sql += " WHERE category = @cat";
+            sql += " AND category = @cat";
         }
 
         sql += (sortBy?.ToLower()) switch
         {
-            "date" => " ORDER BY duedate",
             "priority" => " ORDER BY priority DESC",
+            "date" => " ORDER BY duedate",
             _ => " ORDER BY id"
         };
         
@@ -66,7 +69,9 @@ public class HybridToDoRepository
 
     public void Add(ToDoItem item)
     {
-        using var conn = new NpgsqlConnection(ConnectionString);
+        if (item == null) throw new ArgumentNullException(nameof(item));
+
+        using var conn = new NpgsqlConnection(_connectionString);
         conn.Open();
         
         var sql = @"INSERT INTO tasks (title, description, duedate, priority, category, iscompleted, hasreminder)
@@ -77,7 +82,8 @@ public class HybridToDoRepository
         cmd.Parameters.AddWithValue("d", item.Description ?? "");
         
         if (item.DueDate.HasValue) 
-            cmd.Parameters.AddWithValue("dd", item.DueDate.Value.ToUniversalTime());
+            
+            cmd.Parameters.AddWithValue("dd", item.DueDate.Value);
         else 
             cmd.Parameters.AddWithValue("dd", DBNull.Value);
 
@@ -86,12 +92,16 @@ public class HybridToDoRepository
         cmd.Parameters.AddWithValue("ic", item.IsCompleted);
         cmd.Parameters.AddWithValue("hr", item.HasReminder);
 
-        item.Id = Convert.ToInt32(cmd.ExecuteScalar());
+        var newIdObj = cmd.ExecuteScalar();
+        if (newIdObj != null)
+        {
+            item.Id = Convert.ToInt32(newIdObj);
+        }
     }
 
     public void Delete(int id)
     {
-        using var conn = new NpgsqlConnection(ConnectionString);
+        using var conn = new NpgsqlConnection(_connectionString);
         conn.Open();
         var sql = "DELETE FROM tasks WHERE id = @id";
         using var cmd = new NpgsqlCommand(sql, conn);
@@ -99,31 +109,33 @@ public class HybridToDoRepository
         cmd.ExecuteNonQuery();
     }
 
+
     public void Update(ToDoItem item)
     {
+        if (item == null) throw new ArgumentNullException(nameof(item));
+
         var existing = _context.Tasks.Find(item.Id);
-        if (existing == null) return;
+        if (existing == null) 
+        {
+            return;
+        }
 
         existing.Title = item.Title;
         existing.Description = item.Description ?? "";
         existing.Priority = item.Priority;
         existing.Category = item.Category;
-        
+
         if (item.DueDate.HasValue)
-            existing.DueDate = item.DueDate.Value.ToUniversalTime();
+            existing.DueDate = item.DueDate.Value;
         else
             existing.DueDate = null;
 
         existing.HasReminder = item.HasReminder;
 
         if (item.IsCompleted && !existing.IsCompleted)
-        {
             existing.CompletedAt = DateTime.UtcNow;
-        }
         else if (!item.IsCompleted)
-        {
             existing.CompletedAt = null;
-        }
         
         existing.IsCompleted = item.IsCompleted;
 

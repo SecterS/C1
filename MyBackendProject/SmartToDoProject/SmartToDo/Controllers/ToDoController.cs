@@ -8,9 +8,10 @@ namespace SmartToDo.Controllers;
 [Route("api/[controller]")]
 public class ToDoController : ControllerBase
 {
-    private readonly HybridToDoRepository _repo;
 
-    public ToDoController(HybridToDoRepository repo)
+    private readonly IToDoRepository _repo;
+
+    public ToDoController(IToDoRepository repo)
     {
         _repo = repo;
     }
@@ -20,18 +21,21 @@ public class ToDoController : ControllerBase
     {
         try
         {
+
             var tasks = _repo.GetAll(category, sortBy);
             return Ok(tasks);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, new { error = ex.Message });
         }
     }
 
     [HttpPost]
     public IActionResult Create([FromBody] ToDoItem item)
     {
+        if (item == null) return BadRequest("Task is null");
+
         try
         {
             _repo.Add(item);
@@ -39,13 +43,15 @@ public class ToDoController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, new { error = ex.Message });
         }
     }
 
     [HttpPut("{id}")]
     public IActionResult Update(int id, [FromBody] ToDoItem item)
     {
+        if (item == null) return BadRequest("Task is null");
+
         try
         {
             if (id != item.Id) item.Id = id;
@@ -54,7 +60,7 @@ public class ToDoController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, new { error = ex.Message });
         }
     }
 
@@ -68,7 +74,7 @@ public class ToDoController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, new { error = ex.Message });
         }
     }
 
@@ -82,7 +88,7 @@ public class ToDoController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, new { error = ex.Message });
         }
     }
 }

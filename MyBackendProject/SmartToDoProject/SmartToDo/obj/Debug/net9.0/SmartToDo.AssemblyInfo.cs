@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SmartToDo")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c2c7101fc5c3b2ae1ec920fe6d587ef7e6a0fee8")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d9a40627e03984451caadb23be9e188dd2e574ad")]
 [assembly: System.Reflection.AssemblyProductAttribute("SmartToDo")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SmartToDo")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
