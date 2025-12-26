@@ -1,31 +1,22 @@
-import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Task } from '../../services/task.service'; 
+import { Task, TaskService } from '../../services/task.service';
 
 @Component({
   selector: 'app-today-tasks',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './today-tasks.html',
-  styleUrls: ['./today-tasks.scss']
+  styleUrl: './today-tasks.scss'
 })
-export class TodayTasks implements OnChanges {
+export class TodayTasks {
   @Input() open = false;
-  @Input() tasks: Task[] = [];
-  
+  @Input() tasks: Task[] = []; 
+
   @Output() closed = new EventEmitter<void>();
-  @Output() addNew = new EventEmitter<void>(); 
+  @Output() addNew = new EventEmitter<void>();
 
-  sortedTasks: Task[] = [];
-  
-  // Статистика
-  stats = { total: 0, done: 0, percent: 0 };
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['tasks'] || changes['open']) {
-      this.updateView();
-    }
-  }
+  constructor(private taskService: TaskService) {}
 
   close() {
     this.closed.emit();
@@ -33,32 +24,46 @@ export class TodayTasks implements OnChanges {
 
 
   onAddNew() {
-    this.addNew.emit(); 
-  }
-
-  private updateView() {
-    if (!this.tasks) return;
-
-    this.stats.total = this.tasks.length;
-    this.stats.done = this.tasks.filter(t => t.isDone).length;
-    this.stats.percent = this.stats.total === 0 ? 0 : Math.round((this.stats.done / this.stats.total) * 100);
-
-    this.sortedTasks = [...this.tasks].sort((a, b) => {
-      if (a.isDone !== b.isDone) return a.isDone ? 1 : -1;
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
-    });
+    this.addNew.emit();
   }
 
   toggleTask(task: Task) {
     task.isDone = !task.isDone;
-    this.updateView();
+
+    this.taskService.updateTask(task).subscribe({
+      next: () => console.log('Updated'),
+      error: (err) => {
+        console.error(err);
+        task.isDone = !task.isDone; 
+      }
+    });
+  }
+
+
+  get stats() {
+    const total = this.tasks.length;
+    const done = this.tasks.filter(t => t.isDone).length;
+    const percent = total > 0 ? (done / total) * 100 : 0;
+    
+    return { total, done, percent };
+  }
+
+
+  get sortedTasks() {
+
+    return [...this.tasks].sort((a, b) => {
+
+      if (a.isDone === b.isDone) return 0;
+
+      return a.isDone ? 1 : -1;
+    });
   }
 
   getPriorityColor(priority: string): string {
     switch (priority) {
-      case 'high': return '#ef4444';
-      case 'medium': return '#f97316';
-      case 'low': return '#3b82f6';
+      case 'high': return '#ef5350';   
+      case 'medium': return '#ffa726'; 
+      case 'low': return '#66bb6a';    
       default: return '#ccc';
     }
   }

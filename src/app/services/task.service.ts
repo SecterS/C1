@@ -19,9 +19,10 @@ interface BackendItem {
   title: string;
   description: string;
   dueDate: string;
-  priority: number; 
-  category: number; 
-  isCompleted: boolean;
+  priority: number;
+  category: number;
+  isCompleted: boolean; 
+  hasReminder: boolean;
 }
 
 @Injectable({
@@ -35,7 +36,6 @@ export class TaskService {
 
   getTasks(): Observable<Task[]> {
     return this.http.get<BackendItem[]>(this.apiUrl).pipe(
-
       map(items => items.map(item => this.mapToFrontend(item)))
     );
   }
@@ -48,9 +48,10 @@ export class TaskService {
     );
   }
 
+
   updateTask(task: Task): Observable<void> {
     const backendData = this.mapToBackend(task);
-
+    console.log('Отправляем на бэк:', backendData); 
     return this.http.put<void>(`${this.apiUrl}/${task.id}`, backendData);
   }
 
@@ -60,16 +61,16 @@ export class TaskService {
   }
 
 
-  private mapToFrontend(item: BackendItem): Task {
-    let p: 'low'|'medium'|'high' = 'low';
-    if (item.priority === 3) p = 'high';
-    if (item.priority === 2) p = 'medium';
 
- 
-    let c: 'work'|'study'|'personal' = 'personal';
+  private mapToFrontend(item: BackendItem): Task {
+
+    let p: any = 'low';
+    if (item.priority === 3) p = 'high';
+    else if (item.priority === 2) p = 'medium';
+
+    let c: any = 'personal';
     if (item.category === 1) c = 'work';
-    if (item.category === 2) c = 'personal'; 
-    if (item.category === 3) c = 'study';
+    else if (item.category === 2) c = 'study'; 
 
     return {
       id: item.id,
@@ -78,19 +79,20 @@ export class TaskService {
       date: item.dueDate ? item.dueDate : new Date().toISOString(),
       priority: p,
       category: c,
-      isDone: item.isCompleted
+      isDone: item.isCompleted, 
+      reminder: item.hasReminder ? 'yes' : 'none'
     };
   }
 
-  
-  private mapToBackend(task: any): any {
+  private mapToBackend(task: any): BackendItem {
+   
     let p = 1;
     if (task.priority === 'high') p = 3;
     if (task.priority === 'medium') p = 2;
 
-    let c = 2; 
+    let c = 3; 
     if (task.category === 'work') c = 1;
-    if (task.category === 'study') c = 3;
+    if (task.category === 'study') c = 2;
 
     return {
       id: task.id || 0,
@@ -99,8 +101,8 @@ export class TaskService {
       dueDate: task.date,
       priority: p,
       category: c,
-      isCompleted: task.isDone,
-      hasReminder: false
+      isCompleted: task.isDone, 
+      hasReminder: task.reminder && task.reminder !== 'none'
     };
   }
 }

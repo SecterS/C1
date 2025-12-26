@@ -1,34 +1,37 @@
-﻿using SmartToDo.Repositories;
+﻿using Microsoft.EntityFrameworkCore;
+using SmartToDo.Data;
+using SmartToDo.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Подключаем контроллеры
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
+
 builder.Services.AddControllers();
-
-// 2. Включаем наш репозиторий (Singleton = одна база на всё время работы)
-builder.Services.AddSingleton<InMemoryToDoRepository>();
-
-// 3. Настройки Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 4. Разрешаем CORS (чтобы фронтенд мог подключиться)
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+builder.Services.AddScoped<IToDoRepository, HybridToDoRepository>();
+
+builder.Services.AddCors(options => {
+    options.AddPolicy("AllowAll", policy => {
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    });
 });
 
 var app = builder.Build();
 
-// Включаем Swagger и интерфейс
-if (app.Environment.IsDevelopment())
-{
+if (app.Environment.IsDevelopment()) {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
 app.UseCors("AllowAll");
 app.MapControllers();
-
 app.Run();

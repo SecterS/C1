@@ -8,32 +8,86 @@ namespace SmartToDo.Controllers;
 [Route("api/[controller]")]
 public class ToDoController : ControllerBase
 {
-    private readonly InMemoryToDoRepository _repo;
+    private readonly IToDoRepository _repo;
 
-    public ToDoController(InMemoryToDoRepository repo)
+    public ToDoController(IToDoRepository repo)
     {
         _repo = repo;
     }
 
-    [HttpGet] // GET: api/todo
+    [HttpGet]
     public IActionResult Get([FromQuery] Category? category, [FromQuery] string? sortBy)
-        => Ok(_repo.GetAll(category, sortBy));
+    {
+        try
+        {
+            var tasks = _repo.GetAll(category, sortBy);
+            return Ok(tasks);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
 
-    [HttpPost] // POST: api/todo
+    [HttpPost]
     public IActionResult Create([FromBody] ToDoItem item)
     {
-        _repo.Add(item);
-        return Ok(item);
+        if (item == null) return BadRequest("Task is null");
+
+        try
+        {
+            item.UserId = 1; 
+            _repo.Add(item);
+            return Ok(item);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
-    [HttpPut("{id}")] // PUT: api/todo/1
+    [HttpPut("{id}")]
     public IActionResult Update(int id, [FromBody] ToDoItem item)
     {
-        item.Id = id;
-        _repo.Update(item);
-        return Ok();
+        if (item == null) return BadRequest("Task is null");
+
+        try
+        {
+            if (id != item.Id) item.Id = id;
+            _repo.Update(item);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
-    [HttpGet("stats")] // GET: api/todo/stats
-    public IActionResult Stats() => Ok(_repo.GetStats());
+    [HttpDelete("{id}")]
+    public IActionResult Delete(int id)
+    {
+        try
+        {
+            _repo.Delete(id);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    [HttpGet("stats")]
+    public IActionResult Stats()
+    {
+        try
+        {
+            var stats = _repo.GetStats();
+            return Ok(stats);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
 }
