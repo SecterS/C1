@@ -2,14 +2,19 @@
   <div class="login-box">
     <h2>Вход</h2>
 
+    <div *ngIf="error" style="color: #ff6b6b; margin-bottom: 15px; background: rgba(255,0,0,0.1); padding: 8px; border-radius: 4px;">
+        ⚠️ {{ error }}
+    </div>
 
-    <form>
+    <form (ngSubmit)="onSubmit()">
+      
       <div class="form-group">
         <label for="username">Логин или email</label>
         <input
           type="text"
           id="username"
           name="username"
+          [(ngModel)]="username"
           placeholder="Введите логин или email"
           required
         />
@@ -21,6 +26,7 @@
           type="password"
           id="password"
           name="password"
+          [(ngModel)]="password"
           placeholder="Введите пароль"
           required
         />
@@ -37,10 +43,12 @@
         </button>
       </div>
 
-      <button type="submit" class="login-btn">Войти</button>
+      <button type="submit" class="login-btn" [disabled]="isLoading">
+        {{ isLoading ? 'Входим...' : 'Войти' }}
+      </button>
     </form>
 
-    <a routerLink="/recovery" class="help-link">Помогите, не могу войти</a>
+    <a routerLink="/auth/recovery" class="help-link">Помогите, не могу войти</a>
 
     <div class="modal-overlay" *ngIf="showRegister" (click)="hideRegisterModal()">
       <div class="modal-window" (click)="$event.stopPropagation()">

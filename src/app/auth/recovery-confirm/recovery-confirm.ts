@@ -7,23 +7,35 @@ import { Router } from '@angular/router';
   selector: 'app-recovery-confirm',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './recovery-confirm.html',  
-  styleUrls: ['./recovery-confirm.scss'],  
+  templateUrl: './recovery-confirm.html',
+  styleUrls: ['./recovery-confirm.scss']
 })
 export class RecoveryConfirm {
   code: string = '';
+  error: string = '';
+  isLoading: boolean = false;
 
-  constructor(private router: Router) {
-    console.log('RecoveryConfirm загружен');
-  }
+  constructor(private router: Router) {}
 
   onSubmit() {
-    console.log('Переход на reset-password');
-    this.router.navigate(['/reset-password']);
+    this.error = '';
+
+    if (!this.code.trim()) {
+      this.error = 'Пожалуйста, введите код';
+      return;
+    }
+
+    this.isLoading = true;
+
+
+    setTimeout(() => {
+      this.isLoading = false;
+
+      this.router.navigate(['/auth/reset-password']);
+    }, 1000);
   }
 
   onCancel() {
-    console.log('Возврат на логин');
-    this.router.navigate(['/login']);
+    this.router.navigate(['/auth/login']);
   }
 }
