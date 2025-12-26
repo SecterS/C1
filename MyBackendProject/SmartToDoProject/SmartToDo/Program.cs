@@ -1,12 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
 using SmartToDo.Data;
+using SmartToDo.Handlers;
 using SmartToDo.Repositories;
+using SmartToDo.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -17,11 +19,19 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddScoped<IToDoRepository, HybridToDoRepository>();
+
+builder.Services.AddScoped<IAuthService, AuthService>(); 
+builder.Services.AddScoped<IToDoRepository, HybridToDoRepository>(); 
+
+
+builder.Services.AddAuthentication("BasicAuthentication")
+    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
 
 builder.Services.AddCors(options => {
     options.AddPolicy("AllowAll", policy => {
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
     });
 });
 
@@ -33,5 +43,10 @@ if (app.Environment.IsDevelopment()) {
 }
 
 app.UseCors("AllowAll");
+
+
+app.UseAuthentication(); 
+app.UseAuthorization();  
+
 app.MapControllers();
 app.Run();
