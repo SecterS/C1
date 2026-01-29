@@ -14,19 +14,20 @@ public class HybridToDoRepository : IToDoRepository
 
     public HybridToDoRepository(AppDbContext context, IConfiguration configuration)
     {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(configuration);
+
         _context = context;
         _connectionString = configuration.GetConnectionString("DefaultConnection") 
                             ?? throw new InvalidOperationException("Connection string not found.");
     }
-
-    public List<ToDoItem> GetAll(Category? category, string? sortBy)
+    public List<ToDoItem> GetAll(int userId, Category? category, string? sortBy)
     {
         var result = new List<ToDoItem>();
         
         using var conn = new NpgsqlConnection(_connectionString);
         conn.Open();
-
-        var sql = "SELECT * FROM tasks WHERE 1=1";
+        var sql = "SELECT * FROM tasks WHERE user_id = @uid"; 
 
         if (category.HasValue)
         {
@@ -41,6 +42,7 @@ public class HybridToDoRepository : IToDoRepository
         };
         
         using var cmd = new NpgsqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("uid", userId); 
 
         if (category.HasValue)
         {
@@ -48,12 +50,12 @@ public class HybridToDoRepository : IToDoRepository
         }
 
         using var reader = cmd.ExecuteReader();
-
         while (reader.Read())
         {
             result.Add(new ToDoItem
             {
                 Id = reader.GetInt32(reader.GetOrdinal("id")),
+                UserId = reader.GetInt32(reader.GetOrdinal("user_id")),
                 Title = reader.GetString(reader.GetOrdinal("title")),
                 Description = reader.IsDBNull(reader.GetOrdinal("description")) ? "" : reader.GetString(reader.GetOrdinal("description")),
                 DueDate = reader.IsDBNull(reader.GetOrdinal("duedate")) ? null : reader.GetDateTime(reader.GetOrdinal("duedate")),
@@ -63,7 +65,6 @@ public class HybridToDoRepository : IToDoRepository
                 HasReminder = reader.GetBoolean(reader.GetOrdinal("hasreminder"))
             });
         }
-        
         return result; 
     }
 
@@ -74,30 +75,22 @@ public class HybridToDoRepository : IToDoRepository
         using var conn = new NpgsqlConnection(_connectionString);
         conn.Open();
         
+ 
         var sql = @"INSERT INTO tasks (user_id, title, description, duedate, priority, category, iscompleted, hasreminder)
                     VALUES (@uid, @t, @d, @dd, @p, @c, @ic, @hr) RETURNING id";
         
         using var cmd = new NpgsqlCommand(sql, conn);
-        
-        cmd.Parameters.AddWithValue("uid", item.UserId);
+        cmd.Parameters.AddWithValue("uid", item.UserId); 
         cmd.Parameters.AddWithValue("t", item.Title ?? "");
         cmd.Parameters.AddWithValue("d", item.Description ?? "");
-        
-        if (item.DueDate.HasValue) 
-            cmd.Parameters.AddWithValue("dd", item.DueDate.Value);
-        else 
-            cmd.Parameters.AddWithValue("dd", DBNull.Value);
-
+        cmd.Parameters.AddWithValue("dd", item.DueDate.HasValue ? item.DueDate.Value : DBNull.Value);
         cmd.Parameters.AddWithValue("p", (int)item.Priority);
         cmd.Parameters.AddWithValue("c", (int)item.Category);
         cmd.Parameters.AddWithValue("ic", item.IsCompleted);
         cmd.Parameters.AddWithValue("hr", item.HasReminder);
 
-        var newIdObj = cmd.ExecuteScalar();
-        if (newIdObj != null)
-        {
-            item.Id = Convert.ToInt32(newIdObj);
-        }
+        var newId = cmd.ExecuteScalar();
+        if(newId != null) item.Id = Convert.ToInt32(newId);
     }
 
     public void Delete(int id)
@@ -121,30 +114,25 @@ public class HybridToDoRepository : IToDoRepository
         existing.Description = item.Description ?? "";
         existing.Priority = item.Priority;
         existing.Category = item.Category;
-        
-        if (item.DueDate.HasValue)
-            existing.DueDate = item.DueDate.Value;
-        else
-            existing.DueDate = null;
-
+        existing.DueDate = item.DueDate;
         existing.HasReminder = item.HasReminder;
 
-        if (item.IsCompleted && !existing.IsCompleted)
-            existing.CompletedAt = DateTime.UtcNow;
-        else if (!item.IsCompleted)
-            existing.CompletedAt = null;
+        if (item.IsCompleted && !existing.IsCompleted) existing.CompletedAt = DateTime.UtcNow;
+        else if (!item.IsCompleted) existing.CompletedAt = null;
         
         existing.IsCompleted = item.IsCompleted;
 
         _context.SaveChanges();
     }
-
-    public object GetStats()
+    public object GetStats(int userId)
     {
-        var total = _context.Tasks.Count();
-        var completed = _context.Tasks.Count(x => x.IsCompleted);
+
+        var userTasks = _context.Tasks.Where(x => x.UserId == userId); 
+
+        var total = userTasks.Count();
+        var completed = userTasks.Count(x => x.IsCompleted);
         
-        var byCategory = _context.Tasks
+        var byCategory = userTasks
             .GroupBy(x => x.Category)
             .Select(g => new { Cat = g.Key, Cnt = g.Count() })
             .ToDictionary(k => k.Cat.ToString(), v => v.Cnt);

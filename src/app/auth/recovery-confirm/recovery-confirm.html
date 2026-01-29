@@ -1,22 +1,33 @@
-    <div class="recovery-page">
-      <div class="recovery-box">
-        <h2>Восстановление</h2>
-        <p class="hint-text">Введите код восстановления, который был отправлен вам на почту</p>
+<div class="recovery-page">
+  <div class="recovery-box">
+    <h2>Восстановление</h2>
+    <p class="hint-text">Введите код восстановления, который был отправлен вам на почту</p>
 
-        <div class="form-group">
-          <input 
-            [(ngModel)]="code" 
-            name="code"
-            class="recovery-input" 
-            placeholder="Введите код восстановления" 
-            required
-          />
-        </div>
-
-        <div class="buttons">
-          <button type="button" class="cancel-btn" (click)="onCancel()">Отмена</button>
-          <button type="button" class="send-btn" (click)="onSubmit()">Отправить код</button>
-        </div>
-      </div>
+    <div *ngIf="error" style="color: #ff6b6b; margin-bottom: 15px; font-size: 14px; text-align: center;">
+      ⚠️ {{ error }}
     </div>
-  `,
+
+    <div class="form-group">
+      <input 
+        [(ngModel)]="code" 
+        name="code"
+        class="recovery-input" 
+        placeholder="Введите код" 
+        (input)="error = ''"
+        required
+      />
+    </div>
+
+    <div class="buttons">
+      <button type="button" class="cancel-btn" (click)="onCancel()">Отмена</button>
+      
+      <button 
+        type="button" 
+        class="send-btn" 
+        (click)="onSubmit()"
+        [disabled]="isLoading">
+        {{ isLoading ? 'Проверка...' : 'Отправить код' }}
+      </button>
+    </div>
+  </div>
+</div>

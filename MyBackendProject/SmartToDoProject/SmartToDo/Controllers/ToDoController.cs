@@ -1,9 +1,12 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization; 
 using Microsoft.AspNetCore.Mvc;
 using SmartToDo.Models;
 using SmartToDo.Repositories;
 
 namespace SmartToDo.Controllers;
 
+[Authorize] 
 [ApiController]
 [Route("api/[controller]")]
 public class ToDoController : ControllerBase
@@ -12,7 +15,20 @@ public class ToDoController : ControllerBase
 
     public ToDoController(IToDoRepository repo)
     {
+        ArgumentNullException.ThrowIfNull(repo);
         _repo = repo;
+    }
+
+
+    private int GetCurrentUserId()
+    {
+
+        var idClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        
+        if (idClaim == null)
+            throw new Exception("User ID not found in claims. Auth failed?");
+
+        return int.Parse(idClaim.Value);
     }
 
     [HttpGet]
@@ -20,7 +36,8 @@ public class ToDoController : ControllerBase
     {
         try
         {
-            var tasks = _repo.GetAll(category, sortBy);
+            var userId = GetCurrentUserId(); 
+            var tasks = _repo.GetAll(userId, category, sortBy); 
             return Ok(tasks);
         }
         catch (Exception ex)
@@ -36,7 +53,9 @@ public class ToDoController : ControllerBase
 
         try
         {
-            item.UserId = 1; 
+
+            item.UserId = GetCurrentUserId();
+            
             _repo.Add(item);
             return Ok(item);
         }
@@ -53,6 +72,7 @@ public class ToDoController : ControllerBase
 
         try
         {
+
             if (id != item.Id) item.Id = id;
             _repo.Update(item);
             return Ok();
@@ -82,7 +102,8 @@ public class ToDoController : ControllerBase
     {
         try
         {
-            var stats = _repo.GetStats();
+            var userId = GetCurrentUserId();
+            var stats = _repo.GetStats(userId); 
             return Ok(stats);
         }
         catch (Exception ex)
